@@ -1,0 +1,408 @@
+<!doctype html>
+<title>Iron Blossom</title>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;1,600&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root{
+    --ink:#15121A;
+    --deep:#0B0910;
+    --bone:#F2EDE2;
+    --rust:#C2412F;
+    --brass:#E8B33C;
+    --blossom:#F2C4CE;
+    --teal:#2E8B8B;
+    --violet:#7B4BC4;
+    --steel:#3A3F4A;
+    --dim:#8B8493;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #241A2E 0%, rgba(36,26,46,0) 60%),
+      linear-gradient(180deg,#120E18 0%,#0B0910 55%,#15101A 100%);
+    color:var(--bone);
+    font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* grain so the flat fields don't look like a template */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:99;opacity:.05;
+    background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px);
+    mix-blend-mode:overlay;
+  }
+
+  #fit{position:fixed;top:env(safe-area-inset-top,0px);right:0;
+    bottom:env(safe-area-inset-bottom,0px);left:0;overflow:hidden}
+  #stage{
+    position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center;
+    background:#0B0910;overflow:hidden;
+    box-shadow:0 0 0 1px rgba(242,237,226,.09), 0 40px 120px rgba(0,0,0,.8);
+  }
+  #cv{position:absolute;inset:0;width:1280px;height:720px;display:block}
+
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;z-index:5}
+  .screen.on{display:flex}
+
+  /* ------------------------------------------------------------- title */
+  #title{
+    align-items:center;justify-content:center;text-align:center;
+    background:
+      radial-gradient(900px 520px at 50% 36%, rgba(226,98,42,.22) 0%, rgba(226,98,42,0) 70%),
+      linear-gradient(180deg,rgba(14,10,20,.45) 0%,rgba(11,9,16,.18) 42%,rgba(11,9,16,.62) 100%);
+  }
+  .logo{position:relative;line-height:.84}
+  .logo .iron{
+    font-family:"Alfa Slab One",Georgia,serif;font-size:118px;letter-spacing:-.02em;
+    color:var(--bone);display:block;
+    text-shadow:5px 5px 0 var(--rust), 10px 10px 0 rgba(21,18,26,.85);
+  }
+  .logo .blossom{
+    font-family:"Alfa Slab One",Georgia,serif;font-size:118px;letter-spacing:-.02em;
+    color:var(--blossom);display:block;margin-top:-6px;
+    text-shadow:5px 5px 0 var(--teal), 10px 10px 0 rgba(21,18,26,.85);
+  }
+  .logo .rule{
+    height:5px;background:linear-gradient(90deg,transparent,var(--brass) 18%,var(--brass) 82%,transparent);
+    margin:16px auto 0;width:520px;
+  }
+  .kicker{
+    font-size:17px;font-weight:600;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--brass);margin-top:14px;
+  }
+  .sub{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-size:22px;color:#CFC5D4;margin-top:6px}
+
+  .menu{margin-top:34px;display:flex;flex-direction:column;gap:9px;align-items:center}
+  .mbtn{
+    font-family:"Barlow Condensed",sans-serif;font-size:25px;font-weight:700;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--bone);background:transparent;border:0;cursor:pointer;
+    padding:7px 30px;position:relative;transition:color .12s;
+  }
+  .mbtn::before{content:"▶";position:absolute;left:0;opacity:0;transform:translateX(-8px);transition:.14s;color:var(--rust)}
+  .mbtn:hover,.mbtn:focus-visible{color:var(--brass);outline:none}
+  .mbtn:hover::before,.mbtn:focus-visible::before{opacity:1;transform:translateX(0)}
+  .mbtn .hint{display:block;font-size:13px;letter-spacing:.12em;color:var(--dim);font-weight:500;margin-top:1px}
+
+  .credit{position:absolute;bottom:16px;left:0;right:0;text-align:center;font-size:12.5px;
+    letter-spacing:.14em;color:#6E6878;text-transform:uppercase}
+
+  /* ------------------------------------------------------------ select */
+  #select{background:linear-gradient(180deg,rgba(17,12,24,.93) 0%,rgba(11,9,16,.88) 100%);padding:18px 26px 14px}
+  .selhead{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid rgba(242,237,226,.14);padding-bottom:8px}
+  .selhead h2{font-family:"Alfa Slab One",serif;font-size:30px;margin:0;color:var(--bone)}
+  .selhead .lineup{font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass)}
+  .selbody{flex:1;display:grid;grid-template-columns:300px 1fr 300px;gap:18px;min-height:0;padding-top:12px}
+
+  .sidecard{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .sidecard .who{font-family:"Alfa Slab One",serif;font-size:24px;line-height:1.05;margin:0 0 2px}
+  .sidecard .tag{font-family:"Instrument Serif",serif;font-style:italic;font-size:17px;color:#CBC1D2}
+  .sidecard .slot{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);margin-top:5px}
+  .pcanvas{display:block;width:100%;height:150px;flex:0 0 150px;min-height:0;margin-top:2px}
+  .blurb{font-size:14px;line-height:1.3;color:#D7D0DC;margin-top:3px}
+  .arch{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:6px}
+  .movebox{margin-top:auto;border-top:2px solid rgba(242,237,226,.14);padding-top:9px}
+  .movebox .mlabel{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+  .movebox .mname{font-family:"Alfa Slab One",serif;font-size:16px;line-height:1.08;margin:1px 0 3px}
+  .movebox .mdesc{font-size:12.8px;line-height:1.26;color:#C8C0D0}
+
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:1fr;gap:9px;align-content:center}
+  .cell{
+    position:relative;border:2px solid rgba(242,237,226,.16);background:#171320;cursor:pointer;
+    aspect-ratio:1/1;overflow:hidden;transition:transform .1s,border-color .1s;padding:0;
+  }
+  .cell canvas{position:absolute;inset:0;width:100%;height:100%}
+  .cell .nm{
+    position:absolute;left:0;right:0;bottom:0;font-size:12px;font-weight:700;letter-spacing:.05em;
+    text-align:center;background:linear-gradient(180deg,rgba(11,9,16,0),rgba(11,9,16,.94) 45%);
+    padding:14px 2px 3px;color:var(--bone);line-height:1.05;
+  }
+  .cell:hover{transform:translateY(-3px);border-color:var(--brass)}
+  .cell.p1{border-color:var(--rust);box-shadow:inset 0 0 0 2px var(--rust)}
+  .cell.p2{border-color:var(--teal);box-shadow:inset 0 0 0 2px var(--teal)}
+  .cell .pip{position:absolute;top:3px;left:4px;font-size:12px;font-weight:700;letter-spacing:.1em}
+  .cell.p1 .pip{color:var(--rust)}
+  .cell.p2 .pip{color:var(--teal)}
+
+  .selfoot{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding-top:10px;
+    border-top:2px solid rgba(242,237,226,.14);margin-top:10px;flex-wrap:nowrap}
+  .selfoot>div:first-child{min-width:0;flex:1 1 auto}
+  .selfoot>div:last-child{flex:0 0 auto;padding-right:124px}
+  .stagepick{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+  .spill{
+    font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:5px 11px;
+    border:1.5px solid rgba(242,237,226,.22);background:transparent;color:#C9C1D2;cursor:pointer;
+  }
+  .spill.on{background:var(--brass);color:#1A1410;border-color:var(--brass)}
+  .go{
+    font-family:"Alfa Slab One",serif;font-size:24px;letter-spacing:.04em;padding:8px 30px;
+    background:var(--rust);color:var(--bone);border:0;cursor:pointer;
+    box-shadow:5px 5px 0 rgba(21,18,26,.9);
+  }
+  .go:hover{background:var(--brass);color:#1A1410}
+  .go:disabled{opacity:.35;cursor:not-allowed}
+
+  /* --------------------------------------------------------------- HUD */
+  #hud{position:absolute;inset:0;pointer-events:none;z-index:6;display:none}
+  #hud.on{display:block}
+  .hudtop{transition:opacity .45s ease}
+  .hudtop.hide{opacity:0}
+  .hudtop{position:absolute;top:0;left:0;right:0;display:grid;grid-template-columns:1fr 150px 1fr;
+    gap:10px;padding:12px 16px 0;align-items:start}
+  .side{display:flex;flex-direction:column;gap:4px}
+  .side.right{align-items:flex-end}
+  .nameline{display:flex;align-items:baseline;gap:8px}
+  .side.right .nameline{flex-direction:row-reverse}
+  .fname{font-family:"Alfa Slab One",serif;font-size:19px;line-height:1;letter-spacing:.01em}
+  .pips{display:flex;gap:4px}
+  .pip2{width:11px;height:11px;border:2px solid rgba(242,237,226,.5);transform:rotate(45deg)}
+  .pip2.won{background:var(--brass);border-color:var(--brass)}
+  .hpwrap{
+    position:relative;width:100%;height:24px;background:#241C1C;
+    border:2px solid var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.5);overflow:hidden;
+  }
+  .hpghost{position:absolute;inset:0;background:#C9824A;transition:width .38s ease-out .12s}
+  .hpbar{position:absolute;inset:0;
+    background:linear-gradient(180deg,#7CE8A0 0%,#3CB86A 48%,#2A8A50 100%);transition:width .1s linear}
+  .hpbar.low{background:linear-gradient(180deg,#FFD24A 0%,#E2622A 55%,#B5301E 100%)}
+  .hpwrap .sheen{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 52%)}
+  .side.right .hpghost,.side.right .hpbar{right:0;left:auto}
+  .mtwrap{position:relative;width:64%;height:11px;background:#1C1826;border:2px solid var(--ink)}
+  .mtbar{position:absolute;inset:0;background:linear-gradient(90deg,#3CC8FF,#7B4BC4);transition:width .12s}
+  .mtwrap.full .mtbar{background:linear-gradient(90deg,#FFE9A8,#E8B33C,#FF8A3C);animation:pulse .5s infinite alternate}
+  .mtwrap .ticks{position:absolute;inset:0;border-left:0}
+  .mtwrap .ticks i{position:absolute;top:0;bottom:0;width:2px;background:rgba(11,9,16,.85);left:50%}
+  .side.right .mtbar{right:0;left:auto}
+  .side.right .mtwrap{align-self:flex-end}
+  @keyframes pulse{from{filter:brightness(1)}to{filter:brightness(1.5)}}
+  .mtlabel{font-size:11px;letter-spacing:.18em;color:var(--brass);text-transform:uppercase}
+
+  .clock{text-align:center}
+  .clock .num{font-family:"Alfa Slab One",serif;font-size:50px;line-height:.9;
+    color:var(--bone);text-shadow:3px 3px 0 var(--ink)}
+  .clock .num.warn{color:var(--rust)}
+  .clock .lbl{font-size:11px;letter-spacing:.24em;color:var(--dim);text-transform:uppercase}
+  .stagetag{position:absolute;bottom:10px;left:16px;font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:rgba(242,237,226,.5)}
+  .ctrlhint{position:absolute;bottom:10px;left:16px;font-size:12px;letter-spacing:.12em;
+    color:rgba(242,237,226,.42);text-transform:uppercase}
+  .stagetag{bottom:28px}
+
+  /* ------------------------------------------------------------ dialogs */
+  .veil{position:absolute;inset:0;background:rgba(9,7,14,.86);display:none;
+    align-items:center;justify-content:center;z-index:8;backdrop-filter:blur(3px)}
+  .veil.on{display:flex}
+  .panel{width:min(620px,86%);border:2px solid rgba(242,237,226,.2);background:#141020;padding:26px 30px;
+    box-shadow:0 26px 70px rgba(0,0,0,.7)}
+  .panel h3{font-family:"Alfa Slab One",serif;font-size:31px;margin:0 0 4px}
+  .panel .dek{font-family:"Instrument Serif",serif;font-style:italic;font-size:18px;color:#C7BED0;margin-bottom:16px}
+  .panel .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .keys{display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:15px}
+  .keys h4{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass);margin:0 0 7px}
+  .keys dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0}
+  .keys dt{font-weight:700;color:var(--bone);white-space:nowrap}
+  .keys dd{margin:0;color:#B9B1C4}
+  kbd{display:inline-block;background:#221C30;border:1.5px solid rgba(242,237,226,.25);
+    border-bottom-width:3px;padding:0 6px;font-family:inherit;font-weight:700;font-size:14px}
+
+  /* ------------------------------------------------------------ results */
+  #result .panel{text-align:center}
+  #result .who{font-family:"Alfa Slab One",serif;font-size:44px;line-height:1;margin:6px 0}
+  #result .quote{font-family:"Instrument Serif",serif;font-style:italic;font-size:22px;color:#D6CDE0;margin-top:10px}
+  #result .row{justify-content:center}
+
+  /* -------------------------------------------------------- touch pads */
+  #touch{position:absolute;inset:0;z-index:7;display:none;pointer-events:none}
+  #touch.on{display:block}
+  .tpad{position:absolute;pointer-events:auto;border:2px solid rgba(242,237,226,.3);
+    background:rgba(20,16,30,.55);border-radius:50%;display:grid;place-items:center;
+    font-weight:700;font-size:15px;color:var(--bone);user-select:none;-webkit-user-select:none;
+    width:64px;height:64px;touch-action:none}
+  .tpad:active{background:rgba(232,179,60,.5)}
+  .tpad.wide{width:74px;height:74px}
+
+  .nowplay{position:absolute;top:96px;left:16px;font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:rgba(242,237,226,.4)}
+  .toggles{position:absolute;bottom:9px;right:14px;display:flex;gap:8px;z-index:9}
+  .tg{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;
+    border:1.5px solid rgba(242,237,226,.28);background:rgba(15,12,22,.7);color:#C9C1D2;cursor:pointer}
+  .tg.off{opacity:.42;text-decoration:line-through}
+
+  .fine{font-size:12px;color:#7E7789;line-height:1.45;margin-top:14px}
+
+  /* Landscape game on a portrait phone: ask for a turn rather than shrink to
+     an unplayable size. */
+  #rotate{display:none}
+  @media (max-width:760px) and (orientation:portrait){
+    #rotate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;
+      background:linear-gradient(180deg,#140F1C,#0B0910);text-align:center;padding:24px}
+    #rotate .r{font-family:"Alfa Slab One",Georgia,serif;font-size:27px;color:var(--bone);line-height:1.15}
+    #rotate .s{font-size:16px;color:var(--dim);margin-top:10px;letter-spacing:.06em}
+    #rotate .icon{font-size:44px;margin-bottom:14px;color:var(--brass)}
+  }
+</style>
+
+<div id="rotate"><div><div class="icon">⟳</div><div class="r">Turn your phone sideways</div>
+  <div class="s">Iron Blossom plays in landscape.</div></div></div>
+
+<div id="fit">
+  <div id="stage">
+    <canvas id="cv" width="1280" height="720"></canvas>
+
+    <!-- ------------------------------------------------------ title -->
+    <div class="screen on" id="title">
+      <div class="logo">
+        <span class="iron">IRON</span>
+        <span class="blossom">BLOSSOM</span>
+        <div class="rule"></div>
+      </div>
+      <div class="kicker">Midtown Green · Richmond, Virginia</div>
+      <div class="sub">Ten acts. Two days. One barricade.</div>
+      <div class="menu">
+        <button class="mbtn" data-go="arcade">Festival Run<span class="hint">Five sets. Five stages. Last one standing plays the encore.</span></button>
+        <button class="mbtn" data-go="versus">Two Player<span class="hint">Same keyboard, side stage</span></button>
+        <button class="mbtn" data-go="single">Single Match<span class="hint">Pick everything, fight once</span></button>
+        <button class="mbtn" data-go="howto">Controls</button>
+      </div>
+      <div class="credit">An unofficial fan tribute · Sept 19–20, 2026</div>
+    </div>
+
+    <!-- ----------------------------------------------------- select -->
+    <div class="screen" id="select">
+      <div class="selhead">
+        <h2 id="selTitle">CHOOSE YOUR ACT</h2>
+        <div class="lineup" id="selStep">Player 1</div>
+      </div>
+      <div class="selbody">
+        <div class="sidecard" id="card1"></div>
+        <div class="grid" id="grid"></div>
+        <div class="sidecard" id="card2"></div>
+      </div>
+      <div class="selfoot">
+        <div>
+          <div class="mtlabel" style="margin-bottom:5px">Stage</div>
+          <div class="stagepick" id="stagePick"></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="spill" id="backBtn">Back</button>
+          <button class="go" id="goBtn" disabled>Fight</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- -------------------------------------------------------- HUD -->
+    <div id="hud">
+      <div class="hudtop" id="hudtop">
+        <div class="side" id="s1">
+          <div class="nameline"><span class="fname" id="n1">—</span><span class="pips" id="w1"></span></div>
+          <div class="hpwrap"><div class="hpghost" id="g1"></div><div class="hpbar" id="h1"></div><div class="sheen"></div></div>
+          <div class="mtwrap" id="mw1"><div class="mtbar" id="m1"></div><div class="ticks"><i></i></div></div>
+        </div>
+        <div class="clock">
+          <div class="num" id="clock">99</div>
+          <div class="lbl" id="roundLbl">Round 1</div>
+        </div>
+        <div class="side right" id="s2">
+          <div class="nameline"><span class="fname" id="n2">—</span><span class="pips" id="w2"></span></div>
+          <div class="hpwrap"><div class="hpghost" id="g2"></div><div class="hpbar" id="h2"></div><div class="sheen"></div></div>
+          <div class="mtwrap" id="mw2"><div class="mtbar" id="m2"></div><div class="ticks"><i></i></div></div>
+        </div>
+      </div>
+      <div class="nowplay" id="nowplay"></div>
+      <div class="stagetag" id="stagetag"></div>
+      <div class="ctrlhint">Esc — pause</div>
+    </div>
+
+    <div id="touch"></div>
+
+    <div class="toggles">
+      <button class="tg" id="tgMusic">Music</button>
+      <button class="tg" id="tgSfx">SFX</button>
+    </div>
+
+    <!-- ----------------------------------------------------- dialogs -->
+    <div class="veil" id="howto">
+      <div class="panel">
+        <h3>How to play</h3>
+        <div class="dek">Block by holding away from your opponent. Crouch-block to stop sweeps.</div>
+        <div class="keys">
+          <div>
+            <h4>Player 1</h4>
+            <dl>
+              <dt><kbd>A</kbd> <kbd>D</kbd></dt><dd>Move · tap twice to dash</dd>
+              <dt><kbd>W</kbd> / <kbd>S</kbd></dt><dd>Jump / crouch</dd>
+              <dt><kbd>J</kbd></dt><dd>Light</dd>
+              <dt><kbd>K</kbd></dt><dd>Heavy · <kbd>W</kbd>+<kbd>K</kbd> launcher</dd>
+              <dt><kbd>L</kbd></dt><dd>Kick</dd>
+              <dt><kbd>U</kbd></dt><dd>Grab · pick up scenery</dd>
+              <dt><kbd>I</kbd></dt><dd>Special (50%)</dd>
+              <dt><kbd>S</kbd>+<kbd>I</kbd></dt><dd>Second special (50%)</dd>
+              <dt><kbd>W</kbd>+<kbd>I</kbd></dt><dd>Super (100%)</dd>
+            </dl>
+          </div>
+          <div>
+            <h4>Player 2</h4>
+            <dl>
+              <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Move · tap twice to dash</dd>
+              <dt><kbd>↑</kbd> / <kbd>↓</kbd></dt><dd>Jump / crouch</dd>
+              <dt><kbd>1</kbd></dt><dd>Light</dd>
+              <dt><kbd>2</kbd></dt><dd>Heavy</dd>
+              <dt><kbd>3</kbd></dt><dd>Kick</dd>
+              <dt><kbd>4</kbd></dt><dd>Grab</dd>
+              <dt><kbd>5</kbd></dt><dd>Special</dd>
+              <dt><kbd>↓</kbd>+<kbd>5</kbd></dt><dd>Second special</dd>
+              <dt><kbd>↑</kbd>+<kbd>5</kbd></dt><dd>Super (100%)</dd>
+            </dl>
+          </div>
+        </div>
+        <p class="fine">Every act has two specials at 50% meter and a super at 100%. Win the match and the winner plays a 20-second encore before the results.</p>
+        <p class="fine">Barrels, kegs, coolers, amps and anvils are all live. Pick one up with grab, throw it with heavy. Hit a speaker stack until it blows and it takes whoever is standing near it with it. A broken cooler drops a slushie — walk over it to heal.</p>
+        <div class="row"><button class="go" data-close="howto">Got it</button></div>
+      </div>
+    </div>
+
+    <div class="veil" id="pause">
+      <div class="panel">
+        <h3>Paused</h3>
+        <div class="dek">The crowd is getting restless.</div>
+        <div class="row">
+          <button class="go" id="resumeBtn">Resume</button>
+          <button class="spill" id="howto2">Controls</button>
+          <button class="spill" id="quitBtn">Quit to title</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="veil" id="result">
+      <div class="panel">
+        <div class="mtlabel" id="rLabel">Winner</div>
+        <div class="who" id="rName">—</div>
+        <div class="quote" id="rQuote">—</div>
+        <div class="row">
+          <button class="go" id="nextBtn">Next</button>
+          <button class="spill" id="rQuit">Quit to title</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/rig.js"></script>
+<script src="js/roster.js"></script>
+<script src="js/art.js"></script>
+<script src="js/stages.js"></script>
+<script src="js/crowd.js"></script>
+<script src="js/props.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/specials.js"></script>
+<script src="js/fighter.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
