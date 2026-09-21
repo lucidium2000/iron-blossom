@@ -15,11 +15,119 @@
 
   function fit() {
     const el = $('stage');
-    const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    const box = $('fit');
+    // measure the container rather than the window: it already accounts for
+    // safe-area insets and for the browser chrome collapsing on mobile
+    const w = box.clientWidth || window.innerWidth;
+    const h = box.clientHeight || window.innerHeight;
+    const s = Math.min(w / 1280, h / 720);
     el.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
   }
   window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', () => setTimeout(fit, 120));
+  // iOS changes the visual viewport as the address bar collapses without
+  // always firing resize
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', fit);
+    window.visualViewport.addEventListener('scroll', fit);
+  }
   fit();
+
+  /* --------------------------------------------------------- fullscreen */
+
+  const fsEl = document.documentElement;
+
+  function fsActive() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  function setFauxFull(on) {
+    document.body.classList.toggle('faux', on);
+    fauxOn = on;
+    setTimeout(fit, 60);
+  }
+  let fauxOn = false;
+
+  async function enterFull() {
+    const req = fsEl.requestFullscreen || fsEl.webkitRequestFullscreen;
+    if (req) {
+      try {
+        await req.call(fsEl, { navigationUI: 'hide' });
+        // Android can be pinned to landscape; iOS and desktop will reject this
+        try { await window.screen.orientation.lock('landscape'); } catch (e) { /* not supported */ }
+        return true;
+      } catch (e) { /* fall through to the faux path */ }
+    }
+    // iPhone Safari has no element fullscreen at all, so take the whole page
+    // instead and tell them how to get the real thing.
+    setFauxFull(true);
+    if (isIOS && !standalone) showHomeScreenTip();
+    return false;
+  }
+
+  function exitFull() {
+    const ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fsActive() && ex) { try { ex.call(document); } catch (e) { /* ignore */ } }
+    if (fauxOn) setFauxFull(false);
+    try { window.screen.orientation.unlock(); } catch (e) { /* not supported */ }
+  }
+
+  function toggleFull() {
+    IB.Audio.init();
+    if (fsActive() || fauxOn) exitFull(); else enterFull();
+  }
+
+  const isIOS = /iP(hone|ad|od)/.test(navigator.platform || '') ||
+    (navigator.userAgent.indexOf('Mac') >= 0 && 'ontouchend' in document);
+  const standalone = window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
+  function showHomeScreenTip() {
+    if (localStorage.getItem('ib_a2hs') === '1') return;
+    try { localStorage.setItem('ib_a2hs', '1'); } catch (e) { /* private mode */ }
+    const tip = document.createElement('div');
+    tip.className = 'a2hs';
+    tip.innerHTML = '<b>For true fullscreen on iPhone</b>' +
+      '<span>Safari can\'t take a web page fullscreen. Tap <b>Share</b> ' +
+      '&rarr; <b>Add to Home Screen</b>, then open it from the icon.</span>' +
+      '<button>Got it</button>';
+    document.body.appendChild(tip);
+    tip.querySelector('button').addEventListener('click', () => tip.remove());
+    setTimeout(() => tip.remove(), 9000);
+  }
+
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach((ev) =>
+    document.addEventListener(ev, () => {
+      document.body.classList.toggle('fs', fsActive());
+      setTimeout(fit, 60);
+    }));
+
+  $('tgFull').addEventListener('click', toggleFull);
+  if (standalone) setFauxFull(true);
+
+  /* --------------------------------------------- mobile gesture guards */
+
+  // Double-tap to zoom: `touch-action: manipulation` covers most browsers, but
+  // iOS Safari still zooms in places, so swallow the second tap directly.
+  let lastTap = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTap < 320 && !e.target.closest('button')) e.preventDefault();
+    lastTap = now;
+  }, { passive: false });
+
+  // iOS-only pinch events
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((ev) =>
+    document.addEventListener(ev, (e) => e.preventDefault(), { passive: false }));
+
+  document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('#stage')) e.preventDefault();
+  });
+  // nothing should rubber-band or scroll behind the game
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1 || e.target.closest('#stage')) e.preventDefault();
+  }, { passive: false });
 
   /* -------------------------------------------------------------- input */
 
@@ -59,6 +167,7 @@
       else if ($('howto').classList.contains('on')) closeVeil('howto');
     }
     if (code === 'Enter' && screen === 'title') go('arcade');
+    if (code === 'KeyF' && !e.repeat) toggleFull();
   });
   window.addEventListener('keyup', (e) => { held[codeOf(e)] = false; });
   window.addEventListener('blur', () => { for (const k in held) held[k] = false; });
