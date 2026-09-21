@@ -79,8 +79,29 @@ python3 -m http.server 8321
 
 Then open <http://localhost:8321>.
 
-`bump.py` is a development helper that appends cache-busting tokens to the script tags, so
-edits show up without a hard reload. It isn't needed to play.
+### Deploying
+
+```bash
+./deploy.sh "what changed"
+```
+
+That stamps a fresh build id onto every script tag, commits, pushes, and waits for the
+GitHub Pages build to go live.
+
+The stamp matters. Pages serves `js/*.js` with a ten-minute cache, so a plain `git push`
+leaves people on the old code until it expires — the classic "I pushed it but nothing
+changed" problem. Changing the `?v=` query changes the URL, so browsers fetch the new files
+immediately instead of serving what they already had.
+
+The build id is shown in the bottom corner of the title screen, so you can always tell which
+version is actually loaded. It reads `dev build` when no stamp is present.
+
+`tools/stamp.py` does the stamping on its own if you want it without the deploy:
+
+```bash
+python3 tools/stamp.py           # stamp with the current timestamp
+python3 tools/stamp.py --strip   # remove the tokens again
+```
 
 ## Licence
 

@@ -632,6 +632,15 @@
     });
   }
 
+  // The deploy stamps a ?v= build id onto the script tags to defeat the CDN
+  // cache; show it so it's obvious which build is actually loaded.
+  (function () {
+    const tag = document.querySelector('script[src*="js/main.js"]');
+    const m = tag && /[?&]v=([^&"']+)/.exec(tag.getAttribute('src') || '');
+    const el = $('buildId');
+    if (el) el.textContent = m ? 'build ' + m[1] : 'dev build';
+  })();
+
   show('title');
   requestAnimationFrame(frame);
   window.IBGAME = game;
