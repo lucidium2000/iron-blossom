@@ -78,8 +78,11 @@ window.IB = window.IB || {};
     playA:    P({ lean: 10, shF: 62, elF: -78, shB: -34, elB: 62, hipF: 14, knF: 12, hipB: -16, knB: 18, rootY: -2 }),
     playB:    P({ lean: 16, shF: 84, elF: -58, shB: -22, elB: 50, hipF: 20, knF: 6, hipB: -22, knB: 14, rootY: 3 }),
     playC:    P({ lean: -6, shF: 40, elF: -96, shB: -46, elB: 70, hipF: 8, knF: 18, hipB: -10, knB: 22, rootY: -6 }),
-    singA:    P({ lean: -8, shF: -126, elF: -44, shB: 28, elB: 48, head: -14, hipF: 8, knF: 14, hipB: -10, knB: 16 }),
-    singB:    P({ lean: 4, shF: -104, elF: -62, shB: 40, elB: 40, head: -6, hipF: 14, knF: 10, hipB: -14, knB: 14, rootY: -4 }),
+    // Mic to the mouth: elbow forward and out, forearm folded back up so the
+    // hand sits just below and in front of the chin. A and B differ by how far
+    // the mic is pulled in, which reads as phrasing on the beat.
+    singA:    P({ lean: 4, shF: 72, elF: 146, shB: 34, elB: 46, head: -10, hipF: 10, knF: 14, hipB: -12, knB: 16 }),
+    singB:    P({ lean: -2, shF: 84, elF: 132, shB: 46, elB: 38, head: -16, hipF: 14, knF: 10, hipB: -16, knB: 14, rootY: -5 }),
 
     showSway:   P({ lean: 6, rootX: 11, head: -8, shF: -112, elF: -48, shB: 42, elB: 44, hipF: -16, knF: 28, hipB: 20, knB: 10 }),
     showSway2:  P({ lean: 6, rootX: -11, head: 7, shF: -120, elF: -42, shB: 32, elB: 50, hipF: 18, knF: 10, hipB: -16, knB: 28 }),

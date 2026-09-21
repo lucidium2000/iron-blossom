@@ -164,11 +164,16 @@ window.IB = window.IB || {};
     const handHeld = c.prop && (c.prop.kind === 'mic' || c.prop.kind === 'cowbell');
     if (!o.noProp && c.prop && INSTRUMENT[c.prop.kind] && handHeld) {
       const hd = sk.armF.h;
-      const dx = (sk.head.x - hd.x) * o.face, dy = sk.head.y - hd.y + H * 0.04;
+      // aim the capsule at the mouth, not the middle of the skull, so the ball
+      // ends up where they'd actually sing into it
+      const mx = sk.head.x + o.face * H * 0.055, my = sk.head.y + H * 0.030;
+      const dx = (mx - hd.x) * o.face, dy = my - hd.y;
+      const ang = c.prop.kind === 'cowbell' ? -0.5
+        : (Math.hypot(dx, dy) < H * 0.02 ? -1.9 : Math.atan2(dy, dx));
       ctx.save();
       ctx.translate(hd.x, hd.y);
       ctx.scale(o.face, 1);
-      ctx.rotate(Math.atan2(dy, dx));
+      ctx.rotate(ang);
       INSTRUMENT[c.prop.kind](ctx, H, c.prop);
       ctx.restore();
     }
@@ -276,7 +281,8 @@ window.IB = window.IB || {};
       if (c.prop.kind === 'mic' || c.prop.kind === 'cowbell') {
         const hd = sk.armF.h;
         ctx.translate(hd.x, hd.y);
-        ctx.rotate(Math.atan2(sk.head.y - hd.y + H * 0.04, sk.head.x - hd.x));
+        ctx.rotate(c.prop.kind === 'cowbell' ? -0.5
+          : Math.atan2(sk.head.y + H * 0.030 - hd.y, sk.head.x + H * 0.055 - hd.x));
       } else {
         ctx.translate(sk.pelvis.x + H * 0.055, sk.pelvis.y - H * 0.04);
         ctx.rotate(-0.46);
