@@ -67,6 +67,8 @@ window.IB = window.IB || {};
     this.throwCool = 0;
     this.landT = 0;
     this.vanish = 0;
+    this.swinging = 0;
+    this.hauling = 0;
   }
 
   Fighter.prototype.reset = function (x) {
@@ -424,6 +426,8 @@ window.IB = window.IB || {};
     this.landT = Math.max(0, this.landT - dt);
     this.vanish = Math.max(0, this.vanish - dt);
     this.diving = Math.max(0, (this.diving || 0) - dt);
+    this.swinging = Math.max(0, (this.swinging || 0) - dt);
+    this.hauling = Math.max(0, (this.hauling || 0) - dt);
     if (this.dashTap > 0) this.dashTap -= step;
     if (this.dashT > 0) this.dashT -= step;
 
@@ -615,6 +619,16 @@ window.IB = window.IB || {};
     if (this.landT > 0 && (this.state === 'idle' || this.state === 'walk')) {
       pose = Rig.blend(pose, P.land, U.ease(this.landT / 0.14) * 0.62);
     }
+    // A special that swings something has to look like a swing — otherwise it
+    // reads as the fighter standing still while an effect happens near them.
+    if (this.swinging > 0) {
+      pose = Rig.blend(P.swingS, P.swingH, U.easeOut(U.clamp(1 - this.swinging / 0.34, 0, 1)));
+    } else if (this.hauling > 0) {
+      pose = Rig.blend(P.spWind, P.holdS, U.clamp(this.hauling / 0.55, 0, 1));
+    } else if (this.diving > 0 && !this.grounded) {
+      pose = this.vy < 0 ? P.showHop : Rig.blend(P.fall, P.showKick, 0.5);
+    }
+
     if (this.holding && this.state !== 'attack') {
       pose = Rig.blend(pose, P.carry, 0.78);
     }

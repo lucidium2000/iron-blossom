@@ -384,12 +384,30 @@ window.IB = window.IB || {};
             });
           }
         });
-        // pyro along the front of the deck every other bar
-        if (bar % 2 === 0) {
-          sh.pyro.length = 0;
-          for (let i = 0; i < 5; i++) sh.pyro.push({ x: w.x - 340 + i * 170, t: 0 });
-          IB.Audio.sfx('explode');
+        // pyro along the front of the deck: flame jets one bar, spark
+        // fountains the next, so it never settles into one look
+        sh.pyro.length = 0;
+        const gerb = bar % 2 !== 0;
+        for (let i = 0; i < 5; i++) sh.pyro.push({ x: w.x - 340 + i * 170, t: 0, gerb });
+        if (!gerb) IB.Audio.sfx('explode');
+        if (gerb) {
+          for (let i = 0; i < 5; i++) {
+            this.fx.sparkBurst(w.x - 340 + i * 170, -30, 16);
+          }
         }
+        // streamers off the side cannons
+        [-1, 1].forEach((sgn) => {
+          for (let i = 0; i < 5; i++) {
+            this.fx.add({
+              k: 'chunk', x: w.x + sgn * 360, y: -210,
+              vx: -sgn * U.rand(5, 13), vy: U.rand(-9, -3),
+              w: U.rand(16, 34), h: 4,
+              rot: U.rand(0, U.TAU), vrot: U.rand(-0.2, 0.2),
+              c: U.pick([w.char.ui[0], w.char.ui[1], '#E8B33C']),
+              life: U.rand(2.0, 3.4), t: 0, g: 0.12,
+            });
+          }
+        });
         this.fx.shockwave(w.x, -120, 260, w.char.ui[0], true);
         if (bar % 4 === 0) { IB.Audio.crowdRoar(0.8); this.shake(6); }
       }
@@ -748,6 +766,8 @@ window.IB = window.IB || {};
       ctx.restore();
     });
 
+    if (this.roundState === 'encore') this.drawBand(ctx, cam, this.beat);
+
     // fighters, far one first so the nearer reads on top
     const order = this.p1.y < this.p2.y ? [this.p1, this.p2] : [this.p2, this.p1];
     order.forEach((f) => this.drawFighter(ctx, f));
@@ -793,6 +813,84 @@ window.IB = window.IB || {};
     if (this.cinematic) this.drawCinematic(ctx);
     if (this.announceText) this.drawAnnounce(ctx);
     if (this.comboBanner) this.drawCombo(ctx);
+  };
+
+  // Drummer and two players on the backline, so the headliner isn't up there
+  // on their own. Drawn behind the performer, near-silhouette.
+  Game.prototype.drawBand = function (ctx, cam, beat) {
+    const w = this.encoreWinner;
+    if (!w) return;
+    const c = w.char;
+    const baseY = V.GROUND_Y - 78;              // well upstage of the headliner
+    const bx = w.x - cam.x;
+    const hit = Math.max(0, Math.sin(beat * Math.PI));
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    // scale the whole backline down so it reads as distance, not clutter
+    ctx.translate(bx, baseY);
+    ctx.scale(0.78, 0.78);
+    ctx.translate(-bx, -baseY);
+
+    // drum riser + kit, dead centre behind them
+    const dx = bx - 8;
+    ctx.fillStyle = '#20202A';
+    U.roundRect(ctx, dx - 84, baseY - 26, 168, 30, 5); ctx.fill();
+    // kick drum
+    ctx.fillStyle = '#2E2A36';
+    ctx.beginPath(); ctx.arc(dx, baseY - 44, 30, 0, U.TAU); ctx.fill();
+    ctx.strokeStyle = U.rgba(c.ui[0], 0.7); ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = U.rgba('#F2EDE2', 0.14);
+    ctx.beginPath(); ctx.arc(dx, baseY - 44, 18, 0, U.TAU); ctx.fill();
+    // cymbals, rocking on the beat
+    [[-52, -96, 22], [50, -92, 19]].forEach(([ox, oy, r], i) => {
+      ctx.save();
+      ctx.translate(dx + ox, baseY + oy);
+      ctx.rotate((i ? -1 : 1) * hit * 0.3);
+      ctx.fillStyle = U.rgba('#D8B45A', 0.85);
+      ctx.beginPath(); ctx.ellipse(0, 0, r, 4, 0, 0, U.TAU); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = '#2A2A34'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(dx + ox, baseY + oy); ctx.lineTo(dx + ox, baseY - 30); ctx.stroke();
+    });
+    // the drummer behind it
+    ctx.fillStyle = '#16141C';
+    ctx.beginPath(); ctx.arc(dx, baseY - 104 - hit * 4, 13, 0, U.TAU); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(dx - 20, baseY - 56);
+    ctx.quadraticCurveTo(dx, baseY - 118, dx + 20, baseY - 56);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#16141C'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(dx - 14, baseY - 88);
+    ctx.lineTo(dx - 44, baseY - 96 - hit * 26);
+    ctx.moveTo(dx + 14, baseY - 88);
+    ctx.lineTo(dx + 42, baseY - 92 - (1 - hit) * 26);
+    ctx.stroke();
+
+    // a player either side, leaning into it
+    [-268, 250].forEach((ox, i) => {
+      const px = bx + ox;
+      const lean = Math.sin(beat * Math.PI * 2 + i * 1.7) * 0.16;
+      ctx.save();
+      ctx.translate(px, baseY);
+      ctx.rotate(lean);
+      ctx.fillStyle = '#17151E';
+      ctx.beginPath();
+      ctx.moveTo(-17, 0);
+      ctx.quadraticCurveTo(0, -86, 17, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, -78, 14, 0, U.TAU); ctx.fill();
+      // instrument slung across
+      ctx.save();
+      ctx.rotate(-0.42);
+      ctx.fillStyle = U.rgba(i ? c.ui[1] : c.ui[0], 0.9);
+      U.roundRect(ctx, -14, -46, 30, 18, 8); ctx.fill();
+      ctx.fillStyle = '#C9B28E';
+      U.roundRect(ctx, 14, -42, 48, 6, 2); ctx.fill();
+      ctx.restore();
+      ctx.restore();
+    });
+    ctx.restore();
   };
 
   /* The encore light show. Drawn inside the camera transform so the beams and
@@ -873,6 +971,27 @@ window.IB = window.IB || {};
     sh.pyro.forEach((py) => {
       const px = py.x - cam.x;
       const prog = py.t / 0.85;
+      if (py.gerb) {
+        // spark fountain: a narrow cone of sparks rather than a flame
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const fade = Math.sin(prog * Math.PI);
+        for (let k = 0; k < 26; k++) {
+          const a = -Math.PI / 2 + (U.hash(k, 3) - 0.5) * 0.5;
+          const d = U.hash(k, 7) * 210 * fade;
+          const sx2 = px + Math.cos(a) * d;
+          const sy2 = V.GROUND_Y + Math.sin(a) * d;
+          ctx.fillStyle = U.rgba(k % 3 ? '#FFE9A8' : '#FFB03C', fade * 0.9);
+          ctx.fillRect(sx2 - 1.5, sy2 - 5, 3, 10);
+        }
+        const gg = ctx.createRadialGradient(px, V.GROUND_Y, 2, px, V.GROUND_Y, 70 * fade);
+        gg.addColorStop(0, U.rgba('#FFF0B0', 0.6 * fade));
+        gg.addColorStop(1, U.rgba('#FFB03C', 0));
+        ctx.fillStyle = gg;
+        ctx.beginPath(); ctx.arc(px, V.GROUND_Y, 70 * fade, 0, U.TAU); ctx.fill();
+        ctx.restore();
+        return;
+      }
       const hgt = Math.sin(prog * Math.PI) * 240;
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';

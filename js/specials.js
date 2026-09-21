@@ -403,6 +403,111 @@ window.IB = window.IB || {};
       ctx.restore();
     },
 
+    // A proper scrap: dust cloud with limbs, a cymbal and a headstock flying
+    // out of it. Dijon's whole thing is the band piling round one mic.
+    huddle: function (ctx, p) {
+      const t = p.t;
+      const R = p.w * 0.5 * U.clamp(t * 6, 0.35, 1);
+      ctx.save();
+      // cloud
+      for (let i = 0; i < 11; i++) {
+        const a = (i / 11) * U.TAU + t * 2.2;
+        const rr = R * (0.52 + U.hash(i, Math.floor(t * 14)) * 0.5);
+        ctx.fillStyle = U.rgba(i % 3 ? '#C8B49A' : '#E2D2BC', 0.34);
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * R * 0.34, Math.sin(a) * R * 0.26, rr * 0.5, 0, U.TAU);
+        ctx.fill();
+      }
+      // limbs and gear breaking the surface
+      const n = Math.floor(t * 16);
+      ctx.strokeStyle = '#3A2A1E'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+      for (let i = 0; i < 4; i++) {
+        const a = U.hash(i, n) * U.TAU;
+        const len = R * (0.5 + U.hash(i + 5, n) * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * R * 0.2, Math.sin(a) * R * 0.15);
+        ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len * 0.8);
+        ctx.stroke();
+      }
+      // a fist, a cymbal, a headstock
+      const ca = t * 9;
+      ctx.fillStyle = '#B0784E';
+      ctx.beginPath(); ctx.arc(Math.cos(ca) * R * 0.7, -R * 0.62, 12, 0, U.TAU); ctx.fill();
+      ctx.fillStyle = '#D8B45A';
+      ctx.save();
+      ctx.translate(-R * 0.66, -R * 0.5); ctx.rotate(t * 7);
+      ctx.beginPath(); ctx.ellipse(0, 0, 22, 6, 0, 0, U.TAU); ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = '#E2D2BC';
+      ctx.save();
+      ctx.translate(R * 0.5, -R * 0.72); ctx.rotate(-t * 5);
+      ctx.fillRect(-4, -20, 8, 30);
+      ctx.restore();
+      // impact star
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = U.rgba('#FFE9A8', 0.5 + Math.sin(t * 24) * 0.3);
+      ctx.beginPath();
+      for (let k = 0; k < 10; k++) {
+        const ang = (k / 10) * U.TAU;
+        const rr = k % 2 ? R * 0.3 : R * 0.62;
+        ctx[k ? 'lineTo' : 'moveTo'](Math.cos(ang) * rr, Math.sin(ang) * rr * 0.8);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    },
+
+    // Rows of hands coming up out of the pit to throw him back.
+    hands: function (ctx, p) {
+      const a = U.clamp((p.life - p.t) * 3, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = a;
+      for (let row = 0; row < 2; row++) {
+        for (let i = 0; i < 9; i++) {
+          const x = -p.w / 2 + (i + (row ? 0.5 : 0)) * (p.w / 9);
+          const lift = Math.sin(p.t * 9 + i * 0.7 + row) * 9;
+          const c = ['#C4A28C', '#9A7452', '#7A5636', '#B08E70'][(i + row) % 4];
+          ctx.strokeStyle = c;
+          ctx.lineWidth = 8 - row * 2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(x, p.h * 0.5);
+          ctx.lineTo(x + row * 4, -p.h * 0.1 - lift - row * 10);
+          ctx.stroke();
+          ctx.fillStyle = c;
+          ctx.beginPath();
+          ctx.arc(x + row * 4, -p.h * 0.12 - lift - row * 10, 7 - row, 0, U.TAU);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    },
+
+    // The home-studio mixing desk, swung like a slab.
+    console: function (ctx, p) {
+      ctx.save();
+      ctx.scale(p.dir, 1);
+      ctx.rotate(p.spin);
+      const w = p.w, h = p.h;
+      ctx.fillStyle = '#2A2E38';
+      U.roundRect(ctx, -w / 2, -h / 2, w, h, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#15121A'; ctx.lineWidth = 4; ctx.stroke();
+      ctx.fillStyle = '#1C1F26';
+      U.roundRect(ctx, -w / 2 + 8, -h / 2 + 7, w - 16, h - 14, 4);
+      ctx.fill();
+      // faders
+      for (let i = 0; i < 9; i++) {
+        const x = -w / 2 + 18 + i * ((w - 36) / 8);
+        ctx.strokeStyle = '#3E434E'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x, -h / 2 + 16); ctx.lineTo(x, h / 2 - 14); ctx.stroke();
+        ctx.fillStyle = i % 2 ? '#E2703A' : '#D8DCE0';
+        ctx.fillRect(x - 4, -h / 2 + 22 + (i % 4) * 9, 8, 6);
+        ctx.fillStyle = '#7CE8A0';
+        ctx.beginPath(); ctx.arc(x, -h / 2 + 12, 2.2, 0, U.TAU); ctx.fill();
+      }
+      ctx.restore();
+    },
+
     aura: function (ctx, p) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
@@ -512,20 +617,100 @@ window.IB = window.IB || {};
   };
   SPEC.phaseSuper = (g, f) => SPEC.phase(g, f, true);
 
+  // ABSOLUTELY — he drags the whole band into a scrap around one mic, comes out
+  // of it swinging a guitar, and takes health back off every connect.
   SPEC.soul = function (g, f, sup) {
     const sp = f.char.special;
-    f.hp = Math.min(f.maxHp, f.hp + (sup ? sp.heal + 40 : sp.heal));
-    f.armor = (sup ? 220 : sp.armor) / 60;
-    g.fx.text(f.x, -190, '+' + (sup ? sp.heal + 40 : sp.heal), '#7CE8A0', 30);
+    const hits = sup ? 8 : 6;
+    f.vx = f.face * 7.5;              // lunge into it rather than stand still
+    f.rushing = 0.3;
+
     g.projectiles.push(new Proj({
-      kind: 'aura', owner: f, color: '#E2703A',
-      x: f.x, y: -110, w: sup ? 340 : 260, h: 220,
-      vx: 0, dmg: sup ? 140 : sp.dmg, hitstun: 20, push: 9,
-      life: sup ? 1.2 : 0.8, pierce: true, follow: true,
+      kind: 'huddle', owner: f, color: '#E2703A',
+      x: 0, y: -104, w: sup ? 300 : 250, h: 210,
+      vx: 0, dmg: sup ? 26 : 22, hitstun: 11, push: 2.5,
+      life: 0.1 + hits * 0.085, pierce: true, repeat: 0.085,
+      follow: true, followOff: 34,
     }));
-    g.crowd.react('special', f.x);
+
+    // each connect gives a little back — the heal is earned, not free
+    const per = Math.round((sup ? sp.heal + 40 : sp.heal) / hits);
+    for (let i = 0; i < hits; i++) {
+      g.pending.push({
+        t: 0.1 + i * 0.085, fn: () => {
+          g.fx.sparkBurst(f.x + f.face * 40 + U.rand(-40, 40), -110 + U.rand(-40, 40), 5);
+          g.fx.dust(f.x + f.face * 30, 0, 3);
+          g.shake(3);
+          if (f.hp < f.maxHp) {
+            f.hp = Math.min(f.maxHp, f.hp + per);
+            if (i % 2 === 0) g.fx.text(f.x, -200 - i * 6, '+' + per, '#7CE8A0', 20);
+          }
+        },
+      });
+    }
+
+    // and out of it with the guitar over his head
+    g.pending.push({
+      t: 0.1 + hits * 0.085, fn: () => {
+        f.swinging = 0.34;
+        f.vx = f.face * 5;
+        g.projectiles.push(new Proj({
+          kind: 'blade', owner: f, color: '#E2703A', dir: f.face,
+          x: f.x + f.face * 76, y: -116, w: 170, h: 170,
+          vx: f.face * 2, vspin: 0.4, dmg: sup ? 120 : 92,
+          hitstun: 26, push: 12, launch: 11, life: 0.26, pierce: true,
+        }));
+        g.fx.shockwave(f.x + f.face * 70, -116, 250, '#E2703A');
+        g.shake(16);
+        g.hitstop(6);
+        IB.Audio.sfx('hit', 1);
+        g.crowd.react('special', f.x);
+      },
+    });
+    f.armor = (sup ? 200 : sp.armor) / 60;
   };
-  SPEC.soulSuper = (g, f) => SPEC.soul(g, f, true);
+
+  // THE DRESS — hauls the mixing desk over his head and puts it through them.
+  SPEC.soulSuper = function (g, f) {
+    f.hauling = 0.55;
+    const desk = new Proj({
+      kind: 'console', owner: f, color: '#E2703A', dir: f.face,
+      x: f.x + f.face * 20, y: -230, w: 210, h: 86,
+      vx: 0, dmg: 0, life: 1.5, pierce: true, spin: -0.22,
+      follow: true, followOff: 20,
+    });
+    g.projectiles.push(desk);
+    g.slowmo(0.2);
+
+    g.pending.push({ t: 0.5, fn: () => {
+      // step in, then bring it down
+      f.vx = f.face * 9;
+      desk.follow = false;
+      desk.vx = f.face * 5;
+      desk.vy = 13;
+      desk.vspin = 0.5;
+      desk.dmg = 190;
+      desk.hitstun = 30;
+      desk.push = 16;
+      desk.launch = 13;
+    } });
+
+    g.pending.push({ t: 0.86, fn: () => {
+      desk.dead = true;
+      g.blast(desk.x, -60, 300, 150, 17, 'speaker', f);
+      g.fx.shockwave(desk.x, -40, 360, '#E2703A');
+      g.fx.shockwave(desk.x, -40, 240, '#FFE9A8', true);
+      g.fx.debris(desk.x, -70, 26, ['#2A2E38', '#D8DCE0', '#E2703A', '#7CE8A0'], 1.2);
+      g.fx.sparkBurst(desk.x, -70, 30);
+      g.fx.dust(desk.x, 0, 22);
+      g.shake(28);
+      g.hitstop(10);
+      g.flash(0.4, '#FFE9A8');
+      g.crowd.react('ko', desk.x);
+      IB.Audio.sfx('explode');
+      f.hauling = 0;
+    } });
+  };
 
   SPEC.flock = function (g, f, sup) {
     const n = sup ? 12 : f.char.special.hits;
@@ -698,25 +883,53 @@ window.IB = window.IB || {};
     });
   };
 
-  // Dijon — off the front of the stage, over the barricade, back down on them.
+  // Dijon — off the front of the stage, the pit throws him back, and he lands
+  // on them. The hands are the point: it should read as the crowd doing it.
   SPEC.stagedive = function (g, f) {
     const opp = f === g.p1 ? g.p2 : g.p1;
-    f.diving = 1.05;
-    f.vy = -17;
-    f.vx = U.sign(opp.x - f.x) * 9.5;
+    const dir = U.sign(opp.x - f.x) || f.face;
+    f.diving = 1.3;
+    f.vx = dir * 12;
+    f.vy = -15;
     f.grounded = false;
     f.state = 'jump';
     g.crowd.react('special', f.x);
-    IB.Audio.crowdRoar(1);
-    g.pending.push({
-      t: 0.62, fn: () => {
-        g.blast(f.x, -60, 250, 130, 15, 'dive', f);
-        g.fx.shockwave(f.x, -40, 300, '#E2703A');
-        g.fx.dust(f.x, 0, 20);
-        g.shake(20);
-        f.diving = 0;
-      },
-    });
+    g.crowd.excite = 1;
+    IB.Audio.crowdRoar(1.1);
+    g.fx.dust(f.x, 0, 12);
+
+    // the pit catches him and launches him back up
+    g.pending.push({ t: 0.30, fn: () => {
+      g.projectiles.push(new Proj({
+        kind: 'hands', owner: f, color: '#C4A28C',
+        x: f.x, y: -30, w: 240, h: 110, vx: 0,
+        dmg: 0, life: 0.55, pierce: true,
+      }));
+      f.vy = -13;
+      f.vx = dir * 9;
+      g.shake(7);
+      IB.Audio.sfx('land');
+    } });
+
+    // and down on top of them
+    g.pending.push({ t: 0.72, fn: () => {
+      f.vy = 26;
+      f.vx = dir * 4;
+    } });
+
+    g.pending.push({ t: 0.95, fn: () => {
+      g.blast(f.x, -60, 290, 145, 16, 'dive', f);
+      g.fx.shockwave(f.x, -30, 340, '#E2703A');
+      g.fx.shockwave(f.x, -30, 210, '#FFE9A8', true);
+      g.fx.debris(f.x, -40, 14, ['#4A3A2C', '#6B5136'], 1);
+      g.fx.dust(f.x, 0, 26);
+      g.shake(24);
+      g.hitstop(8);
+      g.flash(0.26, '#E2703A');
+      g.crowd.react('ko', f.x);
+      IB.Audio.sfx('explode');
+      f.diving = 0;
+    } });
   };
 
   // Geese — the mic stand, swung out on the cable and back.

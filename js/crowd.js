@@ -171,9 +171,13 @@ window.IB = window.IB || {};
       if (b.x > 2700) this.balls.splice(i, 1);
     }
 
+    // during the encore the pit keeps sending them over
+    if (this.hype > 0.5 && Math.random() < dt * 0.9) {
+      this.people.forEach((p) => { if (p.kind === 'phone' && Math.random() < 0.06) p.flash = 1; });
+    }
     this.nextSurfer -= dt;
     if (this.nextSurfer <= 0) {
-      this.nextSurfer = U.rand(11, 22);
+      this.nextSurfer = this.hype > 0.5 ? U.rand(2.5, 5.5) : U.rand(11, 22);
       this.surfers.push({ x: -120, y: 0, row: 0, dir: 1, t: 0 });
     }
     for (let i = this.surfers.length - 1; i >= 0; i--) {
